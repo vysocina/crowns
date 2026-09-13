@@ -68,6 +68,23 @@ html, body {
     user-select: none;
 }
 
+.hint-counter {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    z-index: 5;
+    display: grid;
+    width: 16px;
+    height: 16px;
+    place-items: center;
+    border-radius: 50%;
+    background: #d62828;
+    color: var(--var-white);
+    font-size: 12px;
+    font-weight: 800;
+    pointer-events: none;
+}
+
 @keyframes copyright-pulse {
     0%, 100% {
         opacity: 0.55;
@@ -227,6 +244,7 @@ html, body {
 }
 
 .hint-button {
+    position: relative;
     margin: 0 0 16px;
     padding: 6px 8px;
     border: 0;
@@ -242,6 +260,11 @@ html, body {
 
 .hint-button:active {
     transform: scale(.9);
+}
+
+.hint-button:disabled {
+    cursor: default;
+    opacity: .35;
 }
 
 .board {

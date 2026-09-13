@@ -1725,6 +1725,7 @@ function printLevelSolution(level, options = {}) {
 const CURRENT_LEVEL_STORAGE_KEY = "crowns.currentLevel";
 const ROYAL_MODE_STORAGE_KEY = "crowns.royalMode";
 const RAINBOW_MODE_STORAGE_KEY = "crowns.rainbowMode";
+const HINTS_PER_LEVEL = 3;
 
 function getStoredLevel() {
     const storedLevel = Number.parseInt(
@@ -1987,6 +1988,7 @@ function renderLevel(level, levelNumber, onSolved) {
     let lastTap = null;
     let gesturePoints = [];
     let hintIndex = 0;
+    let hintsRemaining = HINTS_PER_LEVEL;
 
     titleElement.textContent = `Level ${levelNumber}`;
     boardElement.innerHTML = "";
@@ -2130,14 +2132,15 @@ function renderLevel(level, levelNumber, onSolved) {
 
     function applyNextHint() {
         const hintButton = document.querySelector(".hint-button");
+        const hintCounter = document.querySelector(".hint-counter");
         const steps = [...(level.logic?.steps ?? [])].sort(
             (firstStep, secondStep) =>
                 Number(firstStep.type === "placement") -
                 Number(secondStep.type === "placement")
         );
 
-        if (steps.length === 0) {
-            return;
+        if (steps.length === 0 || hintsRemaining === 0) {
+            return false;
         }
 
         for (let offset = 0; offset < steps.length; offset++) {
@@ -2164,6 +2167,9 @@ function renderLevel(level, levelNumber, onSolved) {
                 (step.type === "elimination"
                     ? "Eliminate these cells"
                     : "Place this crown");
+            hintsRemaining--;
+            hintCounter.textContent = String(hintsRemaining);
+            hintButton.disabled = hintsRemaining === 0;
 
             for (const { row, column } of stepCells) {
                 const cellElement = boardElement.querySelector(
@@ -2183,13 +2189,17 @@ function renderLevel(level, levelNumber, onSolved) {
                 }
             }
 
-            return;
+            return true;
         }
 
         hintIndex = 0;
+        return false;
     }
 
     const hintButton = document.querySelector(".hint-button");
+    const hintCounter = document.querySelector(".hint-counter");
+    hintCounter.textContent = String(hintsRemaining);
+    hintButton.disabled = false;
     hintButton.onclick = applyNextHint;
 
     level.grid.forEach((row, rowIndex) => {
