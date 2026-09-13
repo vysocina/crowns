@@ -1744,25 +1744,27 @@ function getBoardSize(levelNumber) {
             (endSize - startSize)
         );
 
+    if (levelNumber <= 5) {
+        return 4;
+    }
+
     if (levelNumber <= 100) {
-        return interpolate(1, 100, 4, 6);
+        return interpolate(6, 100, 5, 7);
     }
 
     if (levelNumber <= 200) {
-        return interpolate(101, 200, 6, 8);
+        return interpolate(101, 200, 7, 9);
     }
 
     if (levelNumber <= 500) {
-        return interpolate(201, 500, 8, 11);
+        return interpolate(201, 500, 9, 11);
     }
 
     if (levelNumber <= 1000) {
-        return interpolate(501, 1000, 11, 13);
+        return interpolate(501, 1000, 11, 14);
     }
 
-    // Levels remain infinite while the generator's supported board size is
-    // bounded. Beyond level 1000, add one cell every 500 levels up to 20x20.
-    return Math.min(20, 13 + Math.floor((levelNumber - 1001) / 500));
+    return 15
 }
 
 function getLevelSeed(levelNumber) {
