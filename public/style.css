@@ -21,6 +21,19 @@
     --var-white: #fff;
 }
 
+html,
+body,
+* {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    touch-action: manipulation;
+}
+
 .nunito {
      font-family: "Nunito", sans-serif;
      font-optical-sizing: auto;
@@ -51,6 +64,8 @@ html, body {
     font-size: 10px;
     text-align: center;
     animation: copyright-pulse 4s ease-in-out infinite;
+    cursor: pointer;
+    user-select: none;
 }
 
 @keyframes copyright-pulse {
@@ -62,6 +77,36 @@ html, body {
     50% {
         opacity: 1;
         transform: scale(1.08);
+    }
+}
+
+.heart-particle {
+    position: fixed;
+    z-index: 10;
+    pointer-events: none;
+    color: #ff6b81;
+    font-size: var(--heart-size);
+    line-height: 1;
+    text-shadow: 0 0 8px rgba(255, 107, 129, 0.8);
+    animation: heart-float var(--heart-duration) ease-out forwards;
+}
+
+@keyframes heart-float {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5) rotate(0deg);
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform:
+            translate(var(--heart-drift), calc(var(--heart-rise) * -1))
+            scale(1.1)
+            rotate(var(--heart-rotation));
     }
 }
 
@@ -136,7 +181,7 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.85);
     pointer-events: none;
     opacity: 0;
     transition: all .3s cubic-bezier(0.65, 0, 0.35, 1);
@@ -180,7 +225,7 @@ html, body {
 .cell-20 { background: #8fbc8f; }
 
 .cell--eliminated {
-    transform: scale(.85);
+    transform: scale(.65);
 }
 
 .cell--eliminated::before {

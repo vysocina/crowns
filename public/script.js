@@ -2039,6 +2039,50 @@ function startGame() {
     renderCurrentLevel();
 }
 
+function startHeartParticles() {
+    const copyrightElement = document.querySelector(".copyright");
+
+    copyrightElement.addEventListener("click", event => {
+        const particleCount = 8;
+
+        for (let index = 0; index < particleCount; index++) {
+            const duration = 1000 + Math.random() * 1000;
+            const particle = document.createElement("span");
+
+            particle.className = "heart-particle";
+            particle.textContent = "💕";
+            particle.style.left = `${event.clientX + (Math.random() - 0.5) * 50}px`;
+            particle.style.top = `${event.clientY + (Math.random() - 0.5) * 8}px`;
+            particle.style.setProperty(
+                "--heart-drift",
+                `${-100 + Math.random() * 200}px`
+            );
+            particle.style.setProperty(
+                "--heart-rise",
+                `${100 + Math.random() * 140}px`
+            );
+            particle.style.setProperty(
+                "--heart-size",
+                `${12 + Math.random() * 10}px`
+            );
+            particle.style.setProperty(
+                "--heart-duration",
+                `${duration}ms`
+            );
+            particle.style.setProperty(
+                "--heart-rotation",
+                `${-35 + Math.random() * 70}deg`
+            );
+
+            particle.addEventListener("animationend", () => {
+                particle.remove();
+            }, { once: true });
+
+            document.body.appendChild(particle);
+        }
+    });
+}
+
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -2066,5 +2110,6 @@ if (typeof module !== "undefined" && module.exports) {
 // -----------------------------------------------------------------------------
 
 if (typeof window !== "undefined" && typeof document !== "undefined") {
+    startHeartParticles();
     startGame();
 }
