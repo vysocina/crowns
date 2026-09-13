@@ -91,6 +91,51 @@ html, body {
     animation: heart-float var(--heart-duration) ease-out forwards;
 }
 
+.royal-mode {
+    --var-dark-gray: #160f24;
+    --var-light-gray: #f4e7b6;
+}
+
+.royal-mode .level h1 {
+    color: #ffd700;
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.65);
+}
+
+.royal-mode .cell {
+    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.25);
+}
+
+.royal-particle {
+    position: fixed;
+    z-index: 11;
+    pointer-events: none;
+    font-size: 22px;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+    line-height: 1;
+    color: #ffd700;
+    filter: drop-shadow(0 0 6px #ffd700);
+    animation: royal-float var(--royal-duration) ease-out forwards;
+}
+
+@keyframes royal-float {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5) rotate(-15deg);
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform:
+            translate(var(--royal-drift), var(--royal-rise))
+            scale(1.2)
+            rotate(15deg);
+    }
+}
+
 @keyframes heart-float {
     0% {
         opacity: 0;

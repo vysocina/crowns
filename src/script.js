@@ -1717,6 +1717,7 @@ function printLevelSolution(level, options = {}) {
 // -----------------------------------------------------------------------------
 
 const CURRENT_LEVEL_STORAGE_KEY = "crowns.currentLevel";
+const ROYAL_MODE_STORAGE_KEY = "crowns.royalMode";
 
 function getStoredLevel() {
     const storedLevel = Number.parseInt(
@@ -1734,6 +1735,54 @@ function saveCurrentLevel(levelNumber) {
         CURRENT_LEVEL_STORAGE_KEY,
         String(levelNumber)
     );
+}
+
+function isRoyalModeEnabled() {
+    return window.localStorage.getItem(ROYAL_MODE_STORAGE_KEY) === "true";
+}
+
+function toggleRoyalMode() {
+    const royalModeEnabled = !isRoyalModeEnabled();
+
+    window.localStorage.setItem(
+        ROYAL_MODE_STORAGE_KEY,
+        String(royalModeEnabled)
+    );
+    document.body.classList.toggle("royal-mode", royalModeEnabled);
+
+    const titleElement = document.querySelector("#level-title");
+    titleElement.textContent = royalModeEnabled
+        ? "Royal Mode Unlocked 👑"
+        : "Royal Mode Disabled";
+    window.setTimeout(() => {
+        titleElement.textContent = `Level ${getStoredLevel()}`;
+    }, 1800);
+}
+
+function createRoyalParticle(x, y) {
+    const particle = document.createElement("span");
+    particle.className = "royal-particle";
+    particle.textContent = "⭐";
+    particle.style.left = `${x + (Math.random() - 0.5) * 40}px`;
+    particle.style.top = `${y}px`;
+    particle.style.setProperty(
+        "--royal-drift",
+        `${-80 + Math.random() * 160}px`
+    );
+    particle.style.setProperty(
+        "--royal-rise",
+        `${-140 + Math.random() * 280}px`
+    );
+    particle.style.setProperty(
+        "--royal-duration",
+        `${900 + Math.random() * 600}ms`
+    );
+
+    particle.addEventListener("animationend", () => {
+        particle.remove();
+    }, { once: true });
+
+    document.body.appendChild(particle);
 }
 
 function getBoardSize(levelNumber) {
@@ -1824,6 +1873,21 @@ function renderLevel(level, levelNumber, onSolved) {
             "cell--crowned",
             state === "crowned"
         );
+
+        if (
+            isRoyalModeEnabled() &&
+            state === "crowned"
+        ) {
+            const bounds = cellElement.getBoundingClientRect();
+            const particleCount = 10;
+
+            for (let index = 0; index < particleCount; index++) {
+                createRoyalParticle(
+                    bounds.left + bounds.width / 2,
+                    bounds.top + bounds.height / 2
+                );
+            }
+        }
 
         if (isSolved(level, cellStates)) {
             onSolved();
@@ -2041,8 +2105,20 @@ function startGame() {
 
 function startHeartParticles() {
     const copyrightElement = document.querySelector(".copyright");
+    let tapCount = 0;
+    let lastTapTime = 0;
 
     copyrightElement.addEventListener("click", event => {
+        const now = Date.now();
+
+        tapCount = now - lastTapTime <= 700 ? tapCount + 1 : 1;
+        lastTapTime = now;
+
+        if (tapCount >= 9) {
+            toggleRoyalMode();
+            tapCount = 0;
+        }
+
         const particleCount = 8;
 
         for (let index = 0; index < particleCount; index++) {
@@ -2125,6 +2201,9 @@ if (typeof module !== "undefined" && module.exports) {
 
 if (typeof window !== "undefined" && typeof document !== "undefined") {
     disableDoubleTapZoom();
+    if (isRoyalModeEnabled()) {
+        document.body.classList.add("royal-mode");
+    }
     startHeartParticles();
     startGame();
 }
