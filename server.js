@@ -5,7 +5,7 @@ const path = require('path')
 const server = http.createServer((req, res) => {
 	let filePath = path.join(
 		__dirname,
-		'public',
+		'src',
 		req.url === '/' ? 'index.html' : req.url,
 	)
 

@@ -4,7 +4,7 @@ const CleanCSS = require("clean-css");
 const { minify: minifyHtml } = require("html-minifier-terser");
 const { minify: minifyJavaScript } = require("terser");
 
-const sourceDirectory = path.join(__dirname, "public");
+const sourceDirectory = path.join(__dirname, "src");
 const outputDirectory = path.join(__dirname, "build");
 
 async function build() {
@@ -17,7 +17,11 @@ async function build() {
         const sourcePath = path.join(sourceDirectory, file);
         const outputPath = path.join(outputDirectory, file);
         const extension = path.extname(file);
-        const source = fs.readFileSync(sourcePath, "utf8");
+        const isTextFile = [".html", ".css", ".js"].includes(extension);
+        const source = fs.readFileSync(
+            sourcePath,
+            isTextFile ? "utf8" : undefined
+        );
         let output = source;
 
         if (extension === ".html") {
