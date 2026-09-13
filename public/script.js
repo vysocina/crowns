@@ -1841,7 +1841,12 @@ function renderLevel(level, levelNumber, onSolved) {
         }
     }
 
-    function toggleEliminated(rowIndex, columnIndex, visitedCells) {
+    function applyEliminationMode(
+        rowIndex,
+        columnIndex,
+        mode,
+        visitedCells
+    ) {
         const cellKey = `${rowIndex}:${columnIndex}`;
 
         if (visitedCells?.has(cellKey)) {
@@ -1863,9 +1868,7 @@ function renderLevel(level, levelNumber, onSolved) {
                 cellElement,
                 rowIndex,
                 columnIndex,
-                cellStates[rowIndex][columnIndex] === "eliminated"
-                    ? null
-                    : "eliminated"
+                mode === "eliminate" ? "eliminated" : null
             );
         }
     }
@@ -1889,6 +1892,7 @@ function renderLevel(level, levelNumber, onSolved) {
             let startX = 0;
             let startY = 0;
             let visitedCells = new Set();
+            let eliminationMode = "eliminate";
 
             cellElement.addEventListener("pointerdown", event => {
                 event.preventDefault();
@@ -1897,8 +1901,17 @@ function renderLevel(level, levelNumber, onSolved) {
                 startX = event.clientX;
                 startY = event.clientY;
                 visitedCells = new Set();
+                eliminationMode =
+                    cellStates[rowIndex][columnIndex] === "eliminated"
+                        ? "restore"
+                        : "eliminate";
                 cellElement.setPointerCapture(event.pointerId);
-                toggleEliminated(rowIndex, columnIndex, visitedCells);
+                applyEliminationMode(
+                    rowIndex,
+                    columnIndex,
+                    eliminationMode,
+                    visitedCells
+                );
             });
 
             cellElement.addEventListener("pointermove", event => {
@@ -1925,9 +1938,10 @@ function renderLevel(level, levelNumber, onSolved) {
                 )?.closest(".cell");
 
                 if (target && boardElement.contains(target)) {
-                    toggleEliminated(
+                    applyEliminationMode(
                         Number(target.dataset.row),
                         Number(target.dataset.column),
+                        eliminationMode,
                         visitedCells
                     );
                 }
