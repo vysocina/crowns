@@ -2083,6 +2083,20 @@ function startHeartParticles() {
     });
 }
 
+function disableDoubleTapZoom() {
+    let lastTouchEnd = 0;
+
+    document.addEventListener("touchend", event => {
+        const now = Date.now();
+
+        if (now - lastTouchEnd <= 350) {
+            event.preventDefault();
+        }
+
+        lastTouchEnd = now;
+    }, { passive: false });
+}
+
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -2110,6 +2124,7 @@ if (typeof module !== "undefined" && module.exports) {
 // -----------------------------------------------------------------------------
 
 if (typeof window !== "undefined" && typeof document !== "undefined") {
+    disableDoubleTapZoom();
     startHeartParticles();
     startGame();
 }
