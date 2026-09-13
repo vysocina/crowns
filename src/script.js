@@ -1726,6 +1726,7 @@ const CURRENT_LEVEL_STORAGE_KEY = "crowns.currentLevel";
 const ROYAL_MODE_STORAGE_KEY = "crowns.royalMode";
 const RAINBOW_MODE_STORAGE_KEY = "crowns.rainbowMode";
 const HINTS_PER_LEVEL = 3;
+const HINT_DELAY_MS = 30_000;
 
 function getStoredLevel() {
     const storedLevel = Number.parseInt(
@@ -1983,12 +1984,25 @@ function isSolved(level, cellStates) {
 function renderLevel(level, levelNumber, onSolved) {
     const boardElement = document.querySelector(".board");
     const titleElement = document.querySelector("#level-title");
+    const hintButton = document.querySelector(".hint-button");
+    const hintCounter = document.querySelector(".hint-counter");
     const cellStates = level.grid.map(row => row.map(() => null));
     const doubleTapDelay = 300;
     let lastTap = null;
     let gesturePoints = [];
     let hintIndex = 0;
     let hintsRemaining = HINTS_PER_LEVEL;
+
+    window.clearTimeout(hintButton.hintUnlockTimeout);
+    hintButton.disabled = true;
+    hintButton.title = "Hints available in 30 seconds";
+    hintCounter.textContent = String(hintsRemaining);
+    hintButton.hintUnlockTimeout = window.setTimeout(() => {
+        if (hintsRemaining > 0) {
+            hintButton.disabled = false;
+            hintButton.title = "Use hint";
+        }
+    }, HINT_DELAY_MS);
 
     titleElement.textContent = `Level ${levelNumber}`;
     boardElement.innerHTML = "";
@@ -2131,8 +2145,6 @@ function renderLevel(level, levelNumber, onSolved) {
     }
 
     function applyNextHint() {
-        const hintButton = document.querySelector(".hint-button");
-        const hintCounter = document.querySelector(".hint-counter");
         const steps = [...(level.logic?.steps ?? [])].sort(
             (firstStep, secondStep) =>
                 Number(firstStep.type === "placement") -
@@ -2196,10 +2208,6 @@ function renderLevel(level, levelNumber, onSolved) {
         return false;
     }
 
-    const hintButton = document.querySelector(".hint-button");
-    const hintCounter = document.querySelector(".hint-counter");
-    hintCounter.textContent = String(hintsRemaining);
-    hintButton.disabled = false;
     hintButton.onclick = applyNextHint;
 
     level.grid.forEach((row, rowIndex) => {
