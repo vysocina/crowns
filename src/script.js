@@ -1718,6 +1718,7 @@ function printLevelSolution(level, options = {}) {
 
 const CURRENT_LEVEL_STORAGE_KEY = "crowns.currentLevel";
 const ROYAL_MODE_STORAGE_KEY = "crowns.royalMode";
+const RAINBOW_MODE_STORAGE_KEY = "crowns.rainbowMode";
 
 function getStoredLevel() {
     const storedLevel = Number.parseInt(
@@ -1739,6 +1740,28 @@ function saveCurrentLevel(levelNumber) {
 
 function isRoyalModeEnabled() {
     return window.localStorage.getItem(ROYAL_MODE_STORAGE_KEY) === "true";
+}
+
+function isRainbowModeEnabled() {
+    return window.localStorage.getItem(RAINBOW_MODE_STORAGE_KEY) === "true";
+}
+
+function toggleRainbowMode() {
+    const rainbowModeEnabled = !isRainbowModeEnabled();
+
+    window.localStorage.setItem(
+        RAINBOW_MODE_STORAGE_KEY,
+        String(rainbowModeEnabled)
+    );
+    document.body.classList.toggle("rainbow-mode", rainbowModeEnabled);
+
+    const titleElement = document.querySelector("#level-title");
+    titleElement.textContent = rainbowModeEnabled
+        ? "Rainbow Kingdom 🌈"
+        : "Rainbow Mode Disabled";
+    window.setTimeout(() => {
+        titleElement.textContent = `Level ${getStoredLevel()}`;
+    }, 1800);
 }
 
 function toggleRoyalMode() {
@@ -1783,6 +1806,110 @@ function createRoyalParticle(x, y) {
     }, { once: true });
 
     document.body.appendChild(particle);
+}
+
+function createRainbowParticle(x, y) {
+    const particle = document.createElement("span");
+    particle.className = "rainbow-particle";
+    particle.textContent = "✨";
+    particle.style.left = `${x}px`;
+    particle.style.top = `${y}px`;
+    particle.style.setProperty(
+        "--rainbow-drift",
+        `${-140 + Math.random() * 280}px`
+    );
+    particle.style.setProperty(
+        "--rainbow-rise",
+        `${-140 + Math.random() * 280}px`
+    );
+    particle.style.setProperty(
+        "--rainbow-hue",
+        `${Math.floor(Math.random() * 360)}deg`
+    );
+    particle.style.setProperty(
+        "--rainbow-duration",
+        `${700 + Math.random() * 800}ms`
+    );
+
+    particle.addEventListener("animationend", () => {
+        particle.remove();
+    }, { once: true });
+
+    document.body.appendChild(particle);
+}
+
+function isBoardCircleGesture(points, boardElement) {
+    if (points.length < 12) {
+        return false;
+    }
+
+    const bounds = boardElement.getBoundingClientRect();
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const radiusX = Math.max(bounds.width / 2, 1);
+    const radiusY = Math.max(bounds.height / 2, 1);
+    let totalAngle = 0;
+    let previousAngle = null;
+    const radii = [];
+
+    for (const point of points) {
+        const normalizedX = (point.x - centerX) / radiusX;
+        const normalizedY = (point.y - centerY) / radiusY;
+        const radius = Math.hypot(normalizedX, normalizedY);
+        const angle = Math.atan2(normalizedY, normalizedX);
+
+        radii.push(radius);
+
+        if (previousAngle !== null) {
+            let delta = angle - previousAngle;
+
+            if (delta > Math.PI) {
+                delta -= Math.PI * 2;
+            } else if (delta < -Math.PI) {
+                delta += Math.PI * 2;
+            }
+
+            totalAngle += delta;
+        }
+
+        previousAngle = angle;
+    }
+
+    const averageRadius =
+        radii.reduce((sum, radius) => sum + radius, 0) / radii.length;
+    const radiusVariation =
+        Math.max(...radii) - Math.min(...radii);
+
+    return (
+        Math.abs(totalAngle) >= Math.PI * 1.6 &&
+        averageRadius >= 0.65 &&
+        averageRadius <= 1.5 &&
+        radiusVariation <= 0.9
+    );
+}
+
+function highlightBoardEdges(boardElement, size) {
+    const edgeCells = boardElement.querySelectorAll(".cell");
+
+    edgeCells.forEach(cell => {
+        const row = Number(cell.dataset.row);
+        const column = Number(cell.dataset.column);
+
+        if (
+            row === 0 ||
+            column === 0 ||
+            row === size - 1 ||
+            column === size - 1
+        ) {
+            cell.classList.add("rainbow-edge-highlight");
+        }
+    });
+
+    window.setTimeout(() => {
+        edgeCells.forEach(cell => {
+            cell.classList.remove("rainbow-edge-highlight");
+        });
+    }, 1400);
 }
 
 function getBoardSize(levelNumber) {
@@ -1852,6 +1979,7 @@ function renderLevel(level, levelNumber, onSolved) {
     const cellStates = level.grid.map(row => row.map(() => null));
     const doubleTapDelay = 300;
     let lastTap = null;
+    let gesturePoints = [];
 
     titleElement.textContent = `Level ${levelNumber}`;
     boardElement.innerHTML = "";
@@ -1875,17 +2003,21 @@ function renderLevel(level, levelNumber, onSolved) {
         );
 
         if (
-            isRoyalModeEnabled() &&
+            (isRoyalModeEnabled() || isRainbowModeEnabled()) &&
             state === "crowned"
         ) {
             const bounds = cellElement.getBoundingClientRect();
             const particleCount = 10;
 
             for (let index = 0; index < particleCount; index++) {
-                createRoyalParticle(
-                    bounds.left + bounds.width / 2,
-                    bounds.top + bounds.height / 2
-                );
+                const x = bounds.left + bounds.width / 2;
+                const y = bounds.top + bounds.height / 2;
+
+                if (isRainbowModeEnabled()) {
+                    createRainbowParticle(x, y);
+                } else {
+                    createRoyalParticle(x, y);
+                }
             }
         }
 
@@ -1965,6 +2097,10 @@ function renderLevel(level, levelNumber, onSolved) {
                 startX = event.clientX;
                 startY = event.clientY;
                 visitedCells = new Set();
+                gesturePoints = [{
+                    x: event.clientX,
+                    y: event.clientY
+                }];
                 eliminationMode =
                     cellStates[rowIndex][columnIndex] === "eliminated"
                         ? "restore"
@@ -1995,6 +2131,11 @@ function renderLevel(level, levelNumber, onSolved) {
                 if (!dragStarted) {
                     return;
                 }
+
+                gesturePoints.push({
+                    x: event.clientX,
+                    y: event.clientY
+                });
 
                 const target = document.elementFromPoint(
                     event.clientX,
@@ -2048,10 +2189,16 @@ function renderLevel(level, levelNumber, onSolved) {
                         time: now
                     };
                 } else {
+                    if (isBoardCircleGesture(gesturePoints, boardElement)) {
+                        toggleRainbowMode();
+                        highlightBoardEdges(boardElement, level.size);
+                    }
+
                     lastTap = null;
                 }
 
                 activePointerId = null;
+                gesturePoints = [];
                 cellElement.releasePointerCapture(event.pointerId);
             });
 
@@ -2059,6 +2206,7 @@ function renderLevel(level, levelNumber, onSolved) {
                 if (event.pointerId === activePointerId) {
                     activePointerId = null;
                     lastTap = null;
+                    gesturePoints = [];
                 }
             });
 
@@ -2203,6 +2351,9 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
     disableDoubleTapZoom();
     if (isRoyalModeEnabled()) {
         document.body.classList.add("royal-mode");
+    }
+    if (isRainbowModeEnabled()) {
+        document.body.classList.add("rainbow-mode");
     }
     startHeartParticles();
     startGame();

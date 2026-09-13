@@ -105,6 +105,38 @@ html, body {
     box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.25);
 }
 
+.rainbow-mode .cell {
+    animation: rainbow-cell 3s linear infinite;
+}
+
+.rainbow-edge-highlight {
+    animation:
+        rainbow-edge-pulse .7s ease-in-out infinite alternate,
+        rainbow-cell 3s linear infinite !important;
+    box-shadow: 0 0 14px 4px #ffd700;
+    z-index: 1;
+}
+
+@keyframes rainbow-edge-pulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.2);
+    }
+}
+
+@keyframes rainbow-cell {
+    from {
+        filter: hue-rotate(0deg) saturate(1.1);
+    }
+
+    to {
+        filter: hue-rotate(360deg) saturate(1.1);
+    }
+}
+
 .royal-particle {
     position: fixed;
     z-index: 11;
@@ -115,6 +147,35 @@ html, body {
     color: #ffd700;
     filter: drop-shadow(0 0 6px #ffd700);
     animation: royal-float var(--royal-duration) ease-out forwards;
+}
+
+ .rainbow-particle {
+    position: fixed;
+    z-index: 11;
+    pointer-events: none;
+    font-size: 24px;
+    line-height: 1;
+    filter: hue-rotate(var(--rainbow-hue)) drop-shadow(0 0 6px #fff);
+    animation: rainbow-float var(--rainbow-duration) ease-out forwards;
+}
+
+@keyframes rainbow-float {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.4) rotate(0deg);
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform:
+            translate(var(--rainbow-drift), var(--rainbow-rise))
+            scale(1.3)
+            rotate(180deg);
+    }
 }
 
 @keyframes royal-float {
