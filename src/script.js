@@ -1099,6 +1099,7 @@ function solveByLogic(board, options = {}) {
                         continue;
                     }
 
+                    const eliminatedCells = [];
                     const positions = new Set(
                         [...state.regionCells[a], ...state.regionCells[b]]
                             .map(cell => axis === "row" ? cell.r : cell.c)
@@ -1121,15 +1122,20 @@ function solveByLogic(board, options = {}) {
                             ) {
                                 excluded[cell.r][cell.c] = true;
                                 eliminated = true;
+                                eliminatedCells.push({
+                                    row: cell.r,
+                                    column: cell.c
+                                });
                             }
                         }
                     }
 
-                    if (eliminated) {
+                    if (eliminatedCells.length > 0) {
                         steps.push({
                             type: "elimination",
                             regions: [a, b],
-                            axis
+                            axis,
+                            cells: eliminatedCells
                         });
                     }
                 }
@@ -1980,6 +1986,7 @@ function renderLevel(level, levelNumber, onSolved) {
     const doubleTapDelay = 300;
     let lastTap = null;
     let gesturePoints = [];
+    let hintIndex = 0;
 
     titleElement.textContent = `Level ${levelNumber}`;
     boardElement.innerHTML = "";
@@ -1991,7 +1998,55 @@ function renderLevel(level, levelNumber, onSolved) {
         boardElement.classList.remove("board--loading");
     });
 
-    function setCellState(cellElement, rowIndex, columnIndex, state) {
+    function eliminateCellsAroundCrown(rowIndex, columnIndex) {
+        const crownRegion = level.grid[rowIndex][columnIndex].region;
+
+        level.grid.forEach((row, targetRow) => {
+            row.forEach((cell, targetColumn) => {
+                if (
+                    targetRow === rowIndex &&
+                    targetColumn === columnIndex
+                ) {
+                    return;
+                }
+
+                const isInSameRow = targetRow === rowIndex;
+                const isInSameColumn = targetColumn === columnIndex;
+                const isInSameRegion = cell.region === crownRegion;
+                const isAdjacent =
+                    Math.abs(targetRow - rowIndex) <= 1 &&
+                    Math.abs(targetColumn - columnIndex) <= 1;
+
+                if (
+                    !isInSameRow &&
+                    !isInSameColumn &&
+                    !isInSameRegion &&
+                    !isAdjacent
+                ) {
+                    return;
+                }
+
+                if (cellStates[targetRow][targetColumn] === "crowned") {
+                    return;
+                }
+
+                cellStates[targetRow][targetColumn] = "eliminated";
+                const targetElement = boardElement.querySelector(
+                    `[data-row="${targetRow}"][data-column="${targetColumn}"]`
+                );
+                targetElement?.classList.add("cell--eliminated");
+                targetElement?.classList.remove("cell--crowned");
+            });
+        });
+    }
+
+    function setCellState(
+        cellElement,
+        rowIndex,
+        columnIndex,
+        state,
+        applyCrownEliminations = false
+    ) {
         cellStates[rowIndex][columnIndex] = state;
         cellElement.classList.toggle(
             "cell--eliminated",
@@ -2001,6 +2056,10 @@ function renderLevel(level, levelNumber, onSolved) {
             "cell--crowned",
             state === "crowned"
         );
+
+        if (state === "crowned" && applyCrownEliminations) {
+            eliminateCellsAroundCrown(rowIndex, columnIndex);
+        }
 
         if (
             (isRoyalModeEnabled() || isRainbowModeEnabled()) &&
@@ -2068,6 +2127,70 @@ function renderLevel(level, levelNumber, onSolved) {
             );
         }
     }
+
+    function applyNextHint() {
+        const hintButton = document.querySelector(".hint-button");
+        const steps = [...(level.logic?.steps ?? [])].sort(
+            (firstStep, secondStep) =>
+                Number(firstStep.type === "placement") -
+                Number(secondStep.type === "placement")
+        );
+
+        if (steps.length === 0) {
+            return;
+        }
+
+        for (let offset = 0; offset < steps.length; offset++) {
+            const stepIndex = (hintIndex + offset) % steps.length;
+            const step = steps[stepIndex];
+            const stepCells = step.type === "placement"
+                ? [{
+                    row: step.row,
+                    column: step.column
+                }]
+                : step.cells ?? [];
+            const isApplied = stepCells.every(
+                ({ row, column }) =>
+                    cellStates[row][column] ===
+                    (step.type === "placement" ? "crowned" : "eliminated")
+            );
+
+            if (isApplied) {
+                continue;
+            }
+
+            hintIndex = (stepIndex + 1) % steps.length;
+            hintButton.title = step.reason ??
+                (step.type === "elimination"
+                    ? "Eliminate these cells"
+                    : "Place this crown");
+
+            for (const { row, column } of stepCells) {
+                const cellElement = boardElement.querySelector(
+                    `[data-row="${row}"][data-column="${column}"]`
+                );
+
+                if (cellElement) {
+                    setCellState(
+                        cellElement,
+                        row,
+                        column,
+                        step.type === "placement"
+                            ? "crowned"
+                            : "eliminated",
+                        step.type === "placement"
+                    );
+                }
+            }
+
+            return;
+        }
+
+        hintIndex = 0;
+    }
+
+    const hintButton = document.querySelector(".hint-button");
+    hintButton.onclick = applyNextHint;
 
     level.grid.forEach((row, rowIndex) => {
         const rowElement = document.createElement("div");

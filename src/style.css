@@ -226,6 +226,24 @@ html, body {
     margin: 0 0 32px 0;
 }
 
+.hint-button {
+    margin: 0 0 16px;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--var-white);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    pointer-events: auto;
+    touch-action: manipulation;
+}
+
+.hint-button:active {
+    transform: scale(.9);
+}
+
 .board {
     padding: 0 32px 32px 32px;
     touch-action: none;
